@@ -151,4 +151,5 @@ cython_debug/
 *.db
 *.sqlite
 
-vehicle_*
+# vehicle_*_tracking.mp4
+*.mp4
