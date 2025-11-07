@@ -31,7 +31,7 @@ class SimulationWithHistory:
         print("="*70 + "\n")
 
         # Initialize
-        self.object_sim = ObjectSimulator(OBJECT_INITIAL_STATES)
+        self.object_sim = ObjectSimulator(initial_states=OBJECT_INITIAL_STATES)
         self.vehicles = [VehicleAgent(i) for i in range(NUM_VEHICLES)]
         self.vehicle_history = [[] for _ in range(NUM_VEHICLES)]
 

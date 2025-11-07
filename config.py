@@ -58,3 +58,38 @@ OBJECT_INITIAL_STATES = np.array([
     [5, 15, 0.2, -0.3],   # object 3
     [15, 15, -0.4, -0.4]  # object 4
 ])
+
+# Simple trajectory specs: straight lines with optional turn
+OBJECT_TRAJECTORY_SPECS = [
+    {
+        # Object 1: Straight line (no turn)
+        'initial_state': OBJECT_INITIAL_STATES[0].tolist(),
+        'maneuvers': [
+            {'type': 'line', 'acceleration': 0.0, 'duration': 5.0},
+        ]
+    },
+    {
+        # Object 2: Straight then 90° turn
+        'initial_state': OBJECT_INITIAL_STATES[1].tolist(),
+        'maneuvers': [
+            {'type': 'line', 'acceleration': 0.0, 'duration': 2.0},
+            {'type': 'arc', 'radius': -5.0, 'angle_limit': np.pi/2},  # 90° right turn
+        ]
+    },
+    {
+        # Object 3: Straight then 90° turn (opposite direction)
+        'initial_state': OBJECT_INITIAL_STATES[2].tolist(),
+        'maneuvers': [
+            {'type': 'line', 'acceleration': 0.0, 'duration': 2.0},
+            {'type': 'arc', 'radius': 5.0, 'angle_limit': np.pi/2},  # 90° left turn
+        ]
+    },
+    {
+        # Object 4: Straight then 180° turn
+        'initial_state': OBJECT_INITIAL_STATES[3].tolist(),
+        'maneuvers': [
+            {'type': 'line', 'acceleration': 0.0, 'duration': 2.0},
+            {'type': 'arc', 'radius': -4.0, 'angle_limit': np.pi},  # 180° turn
+        ]
+    },
+]

@@ -162,13 +162,13 @@ def _sensor_key_mapping(sensor_tracks: Dict[str, List[dict]]) -> Dict[str, int]:
     return {key: idx for idx, key in enumerate(sensor_keys)}
 
 
-def _extract_belief(track: dict) -> float:
-    existence = track.get('existence', {}) or {}
-    if 'belief' in existence and existence['belief'] is not None:
-        return float(existence['belief'])
-    if 'm_E' in existence and existence['m_E'] is not None:
-        return float(existence['m_E'])
-    return 0.0
+# def _extract_belief(track: dict) -> float:
+#     existence = track.get('existence', {}) or {}
+#     if 'belief' in existence and existence['belief'] is not None:
+#         return float(existence['belief'])
+#     if 'm_E' in existence and existence['m_E'] is not None:
+#         return float(existence['m_E'])
+#     return 0.0
 
 
 def _prepare_track_matrix(sensor_tracks: Dict[str, List[dict]]):
@@ -180,15 +180,15 @@ def _prepare_track_matrix(sensor_tracks: Dict[str, List[dict]]):
 
     for sensor_key, tracks in sensor_tracks.items():
         sensor_idx = sensor_to_idx[sensor_key]
-        sorted_tracks = sorted(
-            tracks,
-            key=lambda tr: (
-                -_extract_belief(tr),
-                tr.get('track_id', -1),
-                tr.get('age', 0)
-            )
-        )
-        for track in sorted_tracks:
+        # sorted_tracks = sorted(
+        #     tracks,
+        #     key=lambda tr: (
+        #         -_extract_belief(tr),
+        #         tr.get('track_id', -1),
+        #         tr.get('age', 0)
+        #     )
+        # )
+        for track in tracks:
             state = track.get('state')
             covariance = track.get('covariance')
             if state is None or covariance is None:
@@ -244,15 +244,6 @@ def _build_mahalanobis_distance_matrix(track_records: List[dict]) -> np.ndarray:
         for j in range(i + 1, num_tracks):
             track_j = track_records[j]['track']
 
-            # Same-sensor blocking removed (redundance)
-            # Object ID mismatch logic that prevents false associations
-            # sensor_i = track_records[i]['sensor_key']
-            # sensor_j = track_records[j]['sensor_key']
-            # obj_i = track_i.get('associated_object_id')
-            # obj_j = track_j.get('associated_object_id')
-            # if obj_i is not None and obj_j is not None and obj_i != obj_j:
-            #     continue
-
             dist = _mahalanobis_squared_t2t(track_i, track_j)
             dist_matrix[i, j] = dist_matrix[j, i] = dist
 
@@ -272,7 +263,7 @@ def _cluster_with_greedy_t2ta(sensor_tracks: Dict[str, List[dict]]) -> List[Trac
         feature_matrix,
         distance_matrix=distance_matrix,
         max_distance=T2T_NEES_GATE,
-        allow_same_sensor=True,
+        allow_same_sensor=False,
         cov=None
     ).astype(int)
 
@@ -305,7 +296,7 @@ def _cluster_with_greedy_t2ta(sensor_tracks: Dict[str, List[dict]]) -> List[Trac
 
 
 def get_fused_tracks(clusters: List[TrackCluster]) -> List[dict]:
-    """Extract fused track estimates with provenance for downstream evaluation."""
+    """Extractmethod that compares track position to all ground truth positions using 5m threshol fused track estimates with provenance for downstream evaluation."""
     fused_tracks = []
 
     for cluster in clusters:

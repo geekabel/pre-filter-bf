@@ -9,33 +9,42 @@ Each vehicle has:
 from sensors import SensorArray
 from single_sensor_tracker import SingleSensorTracker
 from multi_sensor_fusion import MultiSensorFusion
+from association_logger import AssociationLogger
 from config import SENSOR_TYPES
 
 
 class VehicleAgent:
     """Vehicle agent with sensor array and tracking system."""
 
-    def __init__(self, vehicle_id):
+    def __init__(self, vehicle_id, enable_association_logging=True):
         """Initialize vehicle agent.
 
         Args:
             vehicle_id: Unique vehicle identifier
+            enable_association_logging: If True, log Hungarian associations
         """
         self.vehicle_id = vehicle_id
 
         # Sensor array
         self.sensor_array = SensorArray(vehicle_id)
 
+        # Association logger (shared by all sensors on this vehicle)
+        self.association_logger = None
+        if enable_association_logging:
+            self.association_logger = AssociationLogger(
+                output_path=f"out/association_log_vehicle_{vehicle_id}.csv"
+            )
+
         # Single-sensor trackers (one per sensor)
         self.single_sensor_trackers = [
-            SingleSensorTracker(sensor_id, SENSOR_TYPES[sensor_id])
+            SingleSensorTracker(sensor_id, SENSOR_TYPES[sensor_id], logger=self.association_logger)
             for sensor_id in range(len(SENSOR_TYPES))
         ]
 
         # Multi-sensor fusion
         self.fusion = MultiSensorFusion(vehicle_id)
 
-    def process_timestep(self, object_states):
+    def process_timestep(self, object_states, timestep=None):
         """Process one time step.
 
         Pipeline:
@@ -46,6 +55,7 @@ class VehicleAgent:
 
         Args:
             object_states: List of true object states [x, y, vx, vy]
+            timestep: Optional timestep for logging
 
         Returns:
             Fused tracks from multi-sensor fusion
@@ -58,7 +68,7 @@ class VehicleAgent:
             # Get detections for this sensor
             detections = measurements_by_sensor[sensor_id]
             # Process through single-sensor tracker
-            tracker.process_detections(detections)
+            tracker.process_detections(detections, timestep=timestep, true_states=object_states)
 
         # Step d) Multi-sensor fusion
         sensor_tracks = [tracker.get_confirmed_tracks()

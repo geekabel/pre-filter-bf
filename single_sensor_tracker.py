@@ -50,20 +50,28 @@ class SingleSensorTrack:
 class SingleSensorTracker:
     """Single-sensor tracker implementing Lima's sensor-level existence logic."""
 
-    def __init__(self, sensor_id, sensor_type):
+    def __init__(self, sensor_id, sensor_type, logger=None):
         """Initialize tracker.
 
         Args:
             sensor_id: Sensor identifier
             sensor_type: Type of sensor ('camera', 'radar', 'lidar')
+            logger: Optional AssociationLogger for logging associations
         """
         self.sensor_id = sensor_id
         self.sensor_type = sensor_type
         self.tracks = []
         self.next_track_id = 0
+        self.logger = logger
 
-    def process_detections(self, detections):
-        """Process detections for one time step (Lima's sensor-level loop)."""
+    def process_detections(self, detections, timestep=None, true_states=None):
+        """Process detections for one time step (Lima's sensor-level loop).
+
+        Args:
+            detections: List of detections
+            timestep: Optional timestep for logging
+            true_states: Optional ground truth object states for ghost detection
+        """
         self._predict_all_tracks()
 
         if len(detections) == 0:
@@ -72,6 +80,11 @@ class SingleSensorTracker:
 
         measurements, measurement_covs, true_obj_ids = self._extract_detection_data(detections)
         associations, unassociated = self._associate_detections(measurements, measurement_covs)
+
+        # Log associations if logger is available
+        if self.logger is not None and timestep is not None:
+            self.logger.log_associations(timestep, self.sensor_id, associations, self.tracks, true_obj_ids, true_states)
+
         self._update_associated_tracks(associations, measurements, measurement_covs, true_obj_ids)
         self._birth_new_tracks(unassociated, measurements, measurement_covs, true_obj_ids)
         self._delete_tracks()

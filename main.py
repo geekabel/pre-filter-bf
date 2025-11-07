@@ -1,8 +1,8 @@
 """Main simulation script for multi-vehicle tracking with Lima's DS sensor fusion."""
 
 import numpy as np
-from config import (NUM_VEHICLES, NUM_TIME_STEPS, OBJECT_INITIAL_STATES,
-                   NUM_OBJECTS, SENSOR_TYPES, DT)
+from config import (NUM_VEHICLES, NUM_TIME_STEPS,
+                   OBJECT_TRAJECTORY_SPECS, NUM_OBJECTS, SENSOR_TYPES, DT)
 from objects import ObjectSimulator
 from vehicle_agent import VehicleAgent
 from evaluation import TrackingEvaluator
@@ -17,8 +17,8 @@ def run_simulation():
     print("="*70 + "\n")
 
     # Initialize object simulator
-    object_sim = ObjectSimulator(OBJECT_INITIAL_STATES)
-    print(f"Initialized {NUM_OBJECTS} objects with constant velocity motion")
+    object_sim = ObjectSimulator(trajectory_specs=OBJECT_TRAJECTORY_SPECS)
+    print(f"Initialized {NUM_OBJECTS} objects with a constant velocity")
 
     # Initialize vehicle agents
     vehicles = [VehicleAgent(i) for i in range(NUM_VEHICLES)]
@@ -27,7 +27,7 @@ def run_simulation():
 
     # Initialize evaluator and logger
     evaluator = TrackingEvaluator(NUM_OBJECTS)
-    logger = SimulationLogger(output_dir="logs")
+    logger = SimulationLogger(output_dir="out")
 
     sensor_confirmed_history = {sensor: [] for sensor in SENSOR_TYPES}
     fused_count_history = []
@@ -46,7 +46,7 @@ def run_simulation():
         # Process each vehicle
         for vehicle in vehicles:
             # Run pipeline: sensors → single-sensor trackers → fusion
-            fused_tracks = vehicle.process_timestep(true_states)
+            fused_tracks = vehicle.process_timestep(true_states, timestep=t)
 
         vehicle_0 = vehicles[0]
         stats_vehicle0 = vehicle_0.get_statistics()
